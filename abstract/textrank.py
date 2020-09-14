@@ -15,7 +15,7 @@ import jieba
 class TextRank(object):
     def __init__(self, **kwargs):
         # 获取当前目录路径
-        current_path = os.path.dirname(os.path.abspath(__file__))
+        current_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')
         self.params = {
             'stopwords': os.path.join(current_path, 'stopwords.txt'),
             'userdicts': None,
@@ -39,7 +39,7 @@ class TextRank(object):
         self._vocab = {}
         self._inv_vocab = {}
         self._vocab_weight = {}
-        with open(self.params.get('vocab'),'r',encoding='utf-8') as fv:
+        with open(self.params.get('vocab'), 'r', encoding='utf-8') as fv:
             for ix, line in enumerate(fv.readlines()):
                 word, weight = line.strip().split(' ')
                 self._vocab[word] = ix
@@ -52,9 +52,12 @@ class TextRank(object):
         self._embeddings_size = self._embeddings.wv.syn0[0].shape[0]
 
     def _segment(self, content):
-        ...
+        words = jieba.cut(content)
+        for word in words:
+            print(word)
 
     def extract_sentence(self):
         ...
+
 
 textrank = TextRank()
