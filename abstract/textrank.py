@@ -66,7 +66,8 @@ class TextRank(object):
             'userdicts': None,
             'embeddings': os.path.join(current_path, 'embeddings.txt'),
             'vocab': os.path.join(current_path, 'vocab.txt'),
-            'topK': 3
+            'topK': 3,
+            'alpha': 0.5
         }
         # 若指定了新值，则用新值
         for key in kwargs.keys():
@@ -117,7 +118,7 @@ class TextRank(object):
         return tokens
 
     def _get_word_embedding(self, word):
-        vector = np.zeros(shape=200, dtype=np.float)
+        vector = np.zeros(shape=self._embeddings_size, dtype=np.float)
         exist = True
         try:
             vector = self._embeddings.word_vec(word)
@@ -127,7 +128,7 @@ class TextRank(object):
         return vector, exist
 
     def _get_sentence_embedding(self, sentence):
-        vector = np.zeros(shape=200, dtype=np.float)
+        vector = np.zeros(shape=self._embeddings_size, dtype=np.float)
         count = 1e-5
         for word in self._segment(sentence):
             word_vec, exist = self._get_word_embedding(word)
@@ -155,7 +156,7 @@ class TextRank(object):
         for i in range(length):
             for j in range(length):
                 simi_mat[i][j] = cosine(vector_sentences[i], vector_sentences[j])
-        scores = pagerank(simi_mat, 0.85)
+        scores = pagerank(simi_mat, self.params.get('alpha'))
         index_scores = np.squeeze(np.argsort(scores, axis=0)).tolist()
         result = []
         for i in range(self.params.get('topK')):
@@ -164,9 +165,7 @@ class TextRank(object):
         return result
 
 
-textrank = TextRank(topK=2)
-cont = '据福建日报消息，9月15日，福建省十三届人大四次会议采用无记名投票方式，补选王宁为福建省人民政府省长，李仰哲为福建省监察委员会主任。王宁，男，汉族，1961年4月生，湖南湘乡人（辽宁沈阳出生），1983年6月加入中国共产党，1983年8月参加工作，大学学历，高级工程师。现任中共十九届中央候补委员，省委副书记，省政府省长、党组书记。' \
-       '1999年6月起任建设部建筑管理司（建筑市场管理司）助理巡视员（副司级，其间：1999年6月至2002年6月挂职任新疆自治区建设厅副厅长、党组成员）；2002年10月起任建设部建筑市场管理司副司长；2005年10月起任住房和城乡建设部稽查办公室副主任（主持工作，正司长级）；2008年8月起任住房和城乡建设部人事司司长；2013年6月起任住房和城乡' \
-       '建设部副部长、党组成员；2015年12月起任福建省委常委、组织部部长，2016年4月兼任省委党校校长；2017年6月起任省委常委，福州市委书记兼福州新区党工委书记；2018年5月起任省委副书记，福州市委书记兼福州新区党工委书记；2020年6月起任省委副书记，省政府党组书记，福州市委书记兼福州新区党工委书记；'
+textrank = TextRank(topK=2,alpha=0.9)
+cont = '中方已就昨天举行的中德欧领导人会晤发布了详细的新闻稿。关于人权问题，习近平主席强调，世界上没有放之四海而皆准的人权发展道路，人权保障没有最好，只有更好。各国首先应该做好自己的事情。相信欧方能够解决好自身存在的人权问题。中方不接受人权“教师爷”，反对搞“双重标准”。中方愿同欧方本着相互尊重的原则加强交流，共同进步。会上还讨论了欧盟内部存在的人权问题，如难民问题久拖不决、人道主义危机屡屡上演，一些欧盟成员国种族主义、极端主义、少数族裔问题抬头，反犹太、反穆斯林、反黑人等言论和恶性事件频频发生等等。欧方坦承自身存在的问题，希望同中方本着平等和尊重的原则开展对话，增进相互了解，妥善处理差异和分歧。习近平主席还阐明了中方在涉港、涉疆问题上的原则立场，指出涉港、涉疆问题的实质是维护中国国家主权、安全和统一，保护各族人民安居乐业的权利。中方坚决反对任何人、任何势力在中国制造不稳定、分裂和动乱，坚决反对任何国家干涉中国内政。在涉疆问题上，我们一直欢迎包括欧方在内的各国朋友去新疆走一走、看一看，去实地了解新疆的真实情况，而不是道听途说，偏信那些刻意编造的谎言。欧盟及成员国驻华使节提出希望访问新疆，中方已经同意并愿作出安排。现在球在欧方一边。同时我要说明一点，我们反对有罪推定式的调查。'
 s = textrank.extract_abstract(cont)
 print(s)
