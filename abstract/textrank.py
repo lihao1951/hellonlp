@@ -12,49 +12,8 @@ import sys
 
 from gensim.models import KeyedVectors
 import jieba
+from utils import *
 import numpy as np
-
-
-def cosine(rep1, rep2):
-    """
-    修正后的余弦相似度
-    :param rep1: numpy.array([*,*,*,...])
-    :param rep2: numpy.array([*,*,*,...])
-    :return: float
-    """
-    assert rep1.shape == rep2.shape
-    cos = np.sum(np.multiply(rep1, rep2)) / (np.linalg.norm(rep1) * np.linalg.norm(rep2))
-    return cos
-
-
-def split_sentence(cont):
-    sentences = []
-    cont_split = re.split('[\n\.。！？\!\?;；]', cont)
-    for s in cont_split:
-        if s != '':
-            sentences.append(s)
-    return sentences
-
-
-def softmax(array):
-    shape = array.shape
-    values = array.sum()
-    for i in range(shape[0]):
-        array[i][0] = array[i][0] / values
-    return array
-
-
-def pagerank(mat, alpha, epsilon=1e-4):
-    mat_shape = mat.shape
-    assert mat_shape[0] == mat_shape[1]
-    pr = np.divide(np.ones((mat_shape[0], 1), dtype=np.float), mat_shape[0])
-    while True:
-        new_pr = softmax(alpha * np.dot(mat, pr) + (1 - alpha) * pr)
-        cha = new_pr - pr
-        if np.sum(np.abs(cha)) <= epsilon:
-            break
-        pr = new_pr
-    return pr
 
 
 class TextRank(object):
@@ -72,7 +31,10 @@ class TextRank(object):
         # 若指定了新值，则用新值
         for key in kwargs.keys():
             value = kwargs.get(key)
-            self.params[key] = value
+            if key in self.params.keys():
+                self.params[key] = value
+            else:
+                print('%s=%s is not in self params' % (key, value))
         # 导入用户自定义词典
         if self.params.get('userdicts'):
             jieba.load_userdict(self.params.get('userdicts'))
@@ -163,9 +125,3 @@ class TextRank(object):
             ix = index_scores[-1 - i]
             result.append(sentences[ix])
         return result
-
-
-textrank = TextRank(topK=2,alpha=0.9)
-cont = '中方已就昨天举行的中德欧领导人会晤发布了详细的新闻稿。关于人权问题，习近平主席强调，世界上没有放之四海而皆准的人权发展道路，人权保障没有最好，只有更好。各国首先应该做好自己的事情。相信欧方能够解决好自身存在的人权问题。中方不接受人权“教师爷”，反对搞“双重标准”。中方愿同欧方本着相互尊重的原则加强交流，共同进步。会上还讨论了欧盟内部存在的人权问题，如难民问题久拖不决、人道主义危机屡屡上演，一些欧盟成员国种族主义、极端主义、少数族裔问题抬头，反犹太、反穆斯林、反黑人等言论和恶性事件频频发生等等。欧方坦承自身存在的问题，希望同中方本着平等和尊重的原则开展对话，增进相互了解，妥善处理差异和分歧。习近平主席还阐明了中方在涉港、涉疆问题上的原则立场，指出涉港、涉疆问题的实质是维护中国国家主权、安全和统一，保护各族人民安居乐业的权利。中方坚决反对任何人、任何势力在中国制造不稳定、分裂和动乱，坚决反对任何国家干涉中国内政。在涉疆问题上，我们一直欢迎包括欧方在内的各国朋友去新疆走一走、看一看，去实地了解新疆的真实情况，而不是道听途说，偏信那些刻意编造的谎言。欧盟及成员国驻华使节提出希望访问新疆，中方已经同意并愿作出安排。现在球在欧方一边。同时我要说明一点，我们反对有罪推定式的调查。'
-s = textrank.extract_abstract(cont)
-print(s)
